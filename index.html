@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kibeti — Daftari Lako la Mahesabu</title>
+<meta name="theme-color" content="#0B2E33">
+<meta name="description" content="Kibeti — daftari la kidijitali la mapato na matumizi yako ya kila siku.">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Sora:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0B2E33;
+    --panel: #123F45;
+    --panel-2: #0E363B;
+    --gold: #E8A33D;
+    --coral: #D6553D;
+    --green: #3E8E6B;
+    --parchment: #F3ECDA;
+    --text-light: #EAF2F1;
+    --text-dim: #9FC4C2;
+    --line: rgba(234, 242, 241, 0.14);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--ink);
+    color: var(--text-light);
+    font-family: 'Sora', sans-serif;
+    min-height: 100vh;
+    padding: 28px 16px 60px;
+  }
+  h1, h2 { font-family: 'Fraunces', serif; font-weight: 600; }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+  .app { max-width: 460px; margin: 0 auto; }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .logo { font-family: 'Fraunces', serif; font-weight: 700; font-size: 1.3rem; }
+  .logo span { color: var(--gold); }
+  .date { color: var(--text-dim); font-size: 0.82rem; font-family: 'IBM Plex Mono', monospace; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+  .tab-btn {
+    flex: 1;
+    padding: 11px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'Sora', sans-serif;
+    font-weight: 600;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .tab-btn.active { background: rgba(232,163,61,0.15); border-color: var(--gold); color: var(--gold); }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  .summary {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .summary .label { color: var(--text-dim); font-size: 0.82rem; margin-bottom: 6px; }
+  .summary .total { font-family: 'IBM Plex Mono', monospace; font-size: 2.1rem; }
+  .summary .total.positive { color: var(--green); }
+  .summary .total.negative { color: var(--coral); }
+  .summary-row { display: flex; gap: 16px; margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--line); }
+  .summary-row div { flex: 1; }
+  .summary-row .k { font-size: 0.76rem; color: var(--text-dim); }
+  .summary-row .v { font-family: 'IBM Plex Mono', monospace; font-size: 1.05rem; margin-top: 2px; }
+  .in-color { color: var(--green); }
+  .out-color { color: var(--coral); }
+
+  .add-form { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 20px; margin-bottom: 20px; }
+  .type-toggle { display: flex; gap: 8px; margin-bottom: 14px; }
+  .type-toggle button {
+    flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--line);
+    background: transparent; color: var(--text-dim); font-family: 'Sora', sans-serif;
+    font-weight: 600; font-size: 0.88rem; cursor: pointer; transition: all 0.15s ease;
+  }
+  .type-toggle button.active.in { background: rgba(62,142,107,0.18); border-color: var(--green); color: var(--green); }
+  .type-toggle button.active.out { background: rgba(214,85,61,0.18); border-color: var(--coral); color: var(--coral); }
+
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 0.78rem; color: var(--text-dim); margin-bottom: 6px; }
+  .field input {
+    width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--panel-2); color: var(--text-light); font-family: 'Sora', sans-serif; font-size: 0.95rem;
+  }
+  .field input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+  .field input.mono-field { font-family: 'IBM Plex Mono', monospace; }
+
+  .btn-add {
+    width: 100%; padding: 13px; border-radius: 10px; border: none; background: var(--gold);
+    color: var(--ink); font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: transform 0.12s ease;
+  }
+  .btn-add:hover { transform: translateY(-1px); }
+  .btn-add:focus-visible { outline: 2px solid var(--parchment); outline-offset: 2px; }
+
+  .list-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .list-head h2 { font-size: 1rem; }
+  .clear-btn { background: none; border: none; color: var(--text-dim); font-size: 0.8rem; cursor: pointer; text-decoration: underline; }
+
+  .entry-list { display: flex; flex-direction: column; gap: 8px; }
+  .entry {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px;
+    display: flex; justify-content: space-between; align-items: center; animation: slide 0.25s ease;
+  }
+  @keyframes slide { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: translateX(0); } }
+  .entry .desc { font-size: 0.9rem; }
+  .entry .time { color: var(--text-dim); font-size: 0.72rem; margin-top: 2px; }
+  .entry .amt { font-family: 'IBM Plex Mono', monospace; font-weight: 500; }
+  .entry .amt.in { color: var(--green); }
+  .entry .amt.out { color: var(--coral); }
+  .entry .del { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 1.1rem; margin-left: 10px; line-height: 1; }
+  .entry .del:hover { color: var(--coral); }
+  .entry-row { display: flex; align-items: center; }
+
+  .empty-state {
+    text-align: center; padding: 40px 20px; color: var(--text-dim); font-size: 0.88rem;
+    border: 1px dashed var(--line); border-radius: 14px;
+  }
+
+  /* History */
+  .history-list { display: flex; flex-direction: column; gap: 10px; }
+  .history-item {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+    padding: 16px 18px; display: flex; justify-content: space-between; align-items: center;
+    cursor: pointer; transition: border-color 0.15s ease;
+  }
+  .history-item:hover { border-color: var(--gold); }
+  .history-item .date-label { font-family: 'Fraunces', serif; font-size: 1.02rem; }
+  .history-item .count { color: var(--text-dim); font-size: 0.76rem; margin-top: 3px; }
+  .history-item .net { font-family: 'IBM Plex Mono', monospace; font-size: 1rem; }
+  .history-item .chevron { color: var(--text-dim); margin-left: 10px; }
+
+  .day-detail-head {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 18px;
+  }
+  .back-btn {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
+    color: var(--text-light); cursor: pointer; font-size: 1.1rem; flex-shrink: 0;
+  }
+  .back-btn:hover { border-color: var(--gold); }
+  .day-detail-head h2 { font-size: 1.15rem; }
+
+  footer { text-align: center; color: var(--text-dim); font-size: 0.76rem; margin-top: 32px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">Kibeti<span>.</span></div>
+    <div class="date mono" id="today-date"></div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-today">Leo</button>
+    <button class="tab-btn" id="tab-history">Historia</button>
+  </div>
+
+  <!-- LEO VIEW -->
+  <div class="view active" id="view-today">
+    <div class="summary">
+      <div class="label">Faida ya leo</div>
+      <div class="total mono" id="total-display">Tsh 0</div>
+      <div class="summary-row">
+        <div><div class="k">Mapato</div><div class="v in-color" id="total-in">Tsh 0</div></div>
+        <div><div class="k">Matumizi</div><div class="v out-color" id="total-out">Tsh 0</div></div>
+      </div>
+    </div>
+
+    <div class="add-form">
+      <div class="type-toggle">
+        <button type="button" id="btn-in" class="active in">+ Mapato</button>
+        <button type="button" id="btn-out" class="out">− Matumizi</button>
+      </div>
+      <div class="field">
+        <label for="desc-input">Maelezo</label>
+        <input type="text" id="desc-input" placeholder="mfano: Mauzo ya chai">
+      </div>
+      <div class="field">
+        <label for="amount-input">Kiasi (Tsh)</label>
+        <input type="number" id="amount-input" class="mono-field" placeholder="0" inputmode="numeric">
+      </div>
+      <button class="btn-add" id="add-btn">Ongeza Kwenye Daftari</button>
+    </div>
+
+    <div class="list-head">
+      <h2>Rekodi za Leo</h2>
+      <button class="clear-btn" id="clear-btn">Futa zote</button>
+    </div>
+    <div class="entry-list" id="entry-list"></div>
+  </div>
+
+  <!-- HISTORIA LIST VIEW -->
+  <div class="view" id="view-history-list">
+    <div class="list-head"><h2>Siku Zilizopita</h2></div>
+    <div class="history-list" id="history-list"></div>
+  </div>
+
+  <!-- HISTORIA DETAIL VIEW -->
+  <div class="view" id="view-history-detail">
+    <div class="day-detail-head">
+      <button class="back-btn" id="back-btn" aria-label="Rudi">←</button>
+      <h2 id="detail-date-label"></h2>
+    </div>
+    <div class="summary">
+      <div class="label">Faida ya siku hiyo</div>
+      <div class="total mono" id="detail-total">Tsh 0</div>
+      <div class="summary-row">
+        <div><div class="k">Mapato</div><div class="v in-color" id="detail-in">Tsh 0</div></div>
+        <div><div class="k">Matumizi</div><div class="v out-color" id="detail-out">Tsh 0</div></div>
+      </div>
+    </div>
+    <div class="list-head"><h2>Rekodi Zilizoandikwa</h2></div>
+    <div class="entry-list" id="detail-entry-list"></div>
+  </div>
+
+  <footer>Kibeti — data yako inahifadhiwa kwenye kifaa chako pekee, siku baada ya siku.</footer>
+</div>
+
+<script>
+  const STORAGE_KEY = "kibeti-ledger-v1";
+
+  function pad(n) { return n.toString().padStart(2, '0'); }
+  function dateKey(d) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
+  function labelForKey(key) {
+    const [y, m, d] = key.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    return dt.toLocaleDateString('sw-TZ', { weekday: 'long', day: 'numeric', month: 'long' });
+  }
+
+  const todayKey = dateKey(new Date());
+
+  function loadDB() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return { days: {} };
+      const parsed = JSON.parse(raw);
+      if (!parsed.days) return { days: {} };
+      return parsed;
+    } catch (e) {
+      return { days: {} };
+    }
+  }
+
+  function saveDB() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+    } catch (e) {
+      // Kimya: hifadhi haipatikani (mfano: hali ya faragha kali ya kivinjari)
+    }
+  }
+
+  let db = loadDB();
+  if (!db.days[todayKey]) db.days[todayKey] = [];
+
+  let uiType = 'in';
+
+  // ---------- Elements ----------
+  const totalDisplay = document.getElementById('total-display');
+  const totalIn = document.getElementById('total-in');
+  const totalOut = document.getElementById('total-out');
+  const entryList = document.getElementById('entry-list');
+  const descInput = document.getElementById('desc-input');
+  const amountInput = document.getElementById('amount-input');
+  const btnIn = document.getElementById('btn-in');
+  const btnOut = document.getElementById('btn-out');
+
+  const tabToday = document.getElementById('tab-today');
+  const tabHistory = document.getElementById('tab-history');
+  const viewToday = document.getElementById('view-today');
+  const viewHistoryList = document.getElementById('view-history-list');
+  const viewHistoryDetail = document.getElementById('view-history-detail');
+  const historyListEl = document.getElementById('history-list');
+  const backBtn = document.getElementById('back-btn');
+  const detailDateLabel = document.getElementById('detail-date-label');
+  const detailTotal = document.getElementById('detail-total');
+  const detailIn = document.getElementById('detail-in');
+  const detailOut = document.getElementById('detail-out');
+  const detailEntryList = document.getElementById('detail-entry-list');
+
+  document.getElementById('today-date').textContent = labelForKey(todayKey);
+
+  function fmt(n) { return "Tsh " + Math.abs(Math.round(n)).toLocaleString('en-US'); }
+
+  function computeTotals(entries) {
+    let sumIn = 0, sumOut = 0;
+    entries.forEach(e => { if (e.type === 'in') sumIn += e.amount; else sumOut += e.amount; });
+    return { sumIn, sumOut, net: sumIn - sumOut };
+  }
+
+  function entryRowHTML(e, withDelete) {
+    const delBtn = withDelete ? `<button class="del" aria-label="Futa" data-id="${e.id}">×</button>` : '';
+    return `
+      <div>
+        <div class="desc">${e.desc}</div>
+        <div class="time">${e.time}</div>
+      </div>
+      <div class="entry-row">
+        <span class="amt ${e.type}">${e.type === 'out' ? '−' : '+'}${fmt(e.amount)}</span>
+        ${delBtn}
+      </div>`;
+  }
+
+  // ---------- LEO VIEW ----------
+  function setType(type) {
+    uiType = type;
+    btnIn.classList.toggle('active', type === 'in');
+    btnOut.classList.toggle('active', type === 'out');
+  }
+  btnIn.addEventListener('click', () => setType('in'));
+  btnOut.addEventListener('click', () => setType('out'));
+
+  function renderToday() {
+    const entries = db.days[todayKey] || [];
+    entryList.innerHTML = '';
+    if (entries.length === 0) {
+      entryList.innerHTML = '<div class="empty-state">Bado hujaandika rekodi yoyote leo. Anza kwa kuongeza mauzo au matumizi hapo juu.</div>';
+    } else {
+      entries.forEach(e => {
+        const row = document.createElement('div');
+        row.className = 'entry';
+        row.innerHTML = entryRowHTML(e, true);
+        entryList.appendChild(row);
+      });
+      entryList.querySelectorAll('.del').forEach(btn => {
+        btn.addEventListener('click', () => {
+          db.days[todayKey] = db.days[todayKey].filter(e => e.id !== btn.dataset.id);
+          saveDB();
+          renderToday();
+        });
+      });
+    }
+    const { sumIn, sumOut, net } = computeTotals(entries);
+    totalIn.textContent = fmt(sumIn);
+    totalOut.textContent = fmt(sumOut);
+    totalDisplay.textContent = (net < 0 ? '−' : '') + fmt(net);
+    totalDisplay.className = 'total mono ' + (net >= 0 ? 'positive' : 'negative');
+  }
+
+  document.getElementById('add-btn').addEventListener('click', () => {
+    const desc = descInput.value.trim();
+    const amount = parseFloat(amountInput.value);
+    if (!desc || !amount || amount <= 0) {
+      amountInput.style.outline = '2px solid var(--coral)';
+      setTimeout(() => amountInput.style.outline = '', 900);
+      return;
+    }
+    db.days[todayKey].unshift({
+      id: Date.now().toString(),
+      desc, amount, type: uiType,
+      time: new Date().toLocaleTimeString('sw-TZ', { hour: '2-digit', minute: '2-digit' })
+    });
+    saveDB();
+    descInput.value = '';
+    amountInput.value = '';
+    renderToday();
+  });
+
+  document.getElementById('clear-btn').addEventListener('click', () => {
+    if (!confirm('Una uhakika unataka kufuta rekodi zote za leo?')) return;
+    db.days[todayKey] = [];
+    saveDB();
+    renderToday();
+  });
+
+  // ---------- HISTORIA LIST ----------
+  function renderHistoryList() {
+    const keys = Object.keys(db.days)
+      .filter(k => (db.days[k] || []).length > 0)
+      .sort((a, b) => b.localeCompare(a));
+
+    historyListEl.innerHTML = '';
+    if (keys.length === 0) {
+      historyListEl.innerHTML = '<div class="empty-state">Hakuna siku zenye rekodi bado. Rekodi zako za nyuma zitaonekana hapa.</div>';
+      return;
+    }
+    keys.forEach(key => {
+      const entries = db.days[key];
+      const { net } = computeTotals(entries);
+      const item = document.createElement('div');
+      item.className = 'history-item';
+      const isToday = key === todayKey;
+      item.innerHTML = `
+        <div>
+          <div class="date-label">${labelForKey(key)}${isToday ? ' (Leo)' : ''}</div>
+          <div class="count">${entries.length} rekodi</div>
+        </div>
+        <div style="display:flex; align-items:center;">
+          <div class="net mono" style="color:${net >= 0 ? 'var(--green)' : 'var(--coral)'}">${net < 0 ? '−' : ''}${fmt(net)}</div>
+          <span class="chevron">›</span>
+        </div>`;
+      item.addEventListener('click', () => openDayDetail(key));
+      historyListEl.appendChild(item);
+    });
+  }
+
+  function openDayDetail(key) {
+    const entries = db.days[key] || [];
+    detailDateLabel.textContent = labelForKey(key);
+    const { sumIn, sumOut, net } = computeTotals(entries);
+    detailIn.textContent = fmt(sumIn);
+    detailOut.textContent = fmt(sumOut);
+    detailTotal.textContent = (net < 0 ? '−' : '') + fmt(net);
+    detailTotal.className = 'total mono ' + (net >= 0 ? 'positive' : 'negative');
+
+    detailEntryList.innerHTML = '';
+    if (entries.length === 0) {
+      detailEntryList.innerHTML = '<div class="empty-state">Hakuna rekodi kwa siku hii.</div>';
+    } else {
+      entries.forEach(e => {
+        const row = document.createElement('div');
+        row.className = 'entry';
+        row.innerHTML = entryRowHTML(e, false);
+        detailEntryList.appendChild(row);
+      });
+    }
+    showView('detail');
+  }
+
+  backBtn.addEventListener('click', () => showView('history'));
+
+  // ---------- TAB / VIEW SWITCHING ----------
+  function showView(name) {
+    viewToday.classList.remove('active');
+    viewHistoryList.classList.remove('active');
+    viewHistoryDetail.classList.remove('active');
+    tabToday.classList.remove('active');
+    tabHistory.classList.remove('active');
+
+    if (name === 'today') {
+      viewToday.classList.add('active');
+      tabToday.classList.add('active');
+    } else if (name === 'history') {
+      viewHistoryList.classList.add('active');
+      tabHistory.classList.add('active');
+      renderHistoryList();
+    } else if (name === 'detail') {
+      viewHistoryDetail.classList.add('active');
+      tabHistory.classList.add('active');
+    }
+  }
+
+  tabToday.addEventListener('click', () => showView('today'));
+  tabHistory.addEventListener('click', () => showView('history'));
+
+  renderToday();
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
